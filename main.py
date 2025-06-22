@@ -39,23 +39,36 @@ def main():
     trainingLabels = idx2numpy.convert_from_file(train_labels_path)
     testingData = idx2numpy.convert_from_file(test_images_path)
     testingLabels = idx2numpy.convert_from_file(test_labels_path)
-    print(trainingData)
-    print(len(trainingData))
-    print(trainingLabels)
     #784 input layer 2x layers of 16 10 output neurons corresponding to each letter
     nn = neural_network.neuralNetwork([784, 100, 10])
     #nn.setValues([[[4, 8], [1, 10]], [[1, 1]]], [[[1], [4]], [[0], [0]]])
     #
     arr = trainingData[0]
-    print(arr.flatten())
     nn.setTrainingData(trainingData, trainingLabels, testingData, testingLabels)
-    trainInput = input("Would you like to train a new database? (Y/N): ")
-    if trainInput == 'y' or trainInput == 'Y':
-        print("Training...")
-        nn.train(1)
-    nn.saveNetwork("neuralNetwork")
-    nn.loadNetwork("neuralNetwork")
-
+    while True:
+        print("Please select an action:")
+        print("\tT: Train network")
+        print("\tS: Save network")
+        print("\tL: Load network")
+        print("\tR: Test network")
+        print("\tQ: Quit")
+        trainInput = input("Action: ")
+        if trainInput == 't' or trainInput == 'T':
+            epochCount = int(input("How many epochs? "))
+            print("Training...")
+            nn.train(epochCount)
+            nn.testAccuracy()
+        elif trainInput == 's' or trainInput == 'S':
+            nn.saveNetwork("neuralNetwork")
+        elif trainInput == 'l' or trainInput == 'L':
+            nn.loadNetwork("neuralNetwork")
+        elif trainInput == 'r' or trainInput == 'R':
+            nn.displayAnswers()
+            nn.testAccuracy()
+        elif trainInput == 'q' or trainInput == 'Q':
+            break
+        else:
+            print("Invalid input, please retry")
 
 
 """
@@ -67,6 +80,7 @@ def main():
             subpl[i][j].axis('off')
     plt.show()
 """
+
 
 
 main()

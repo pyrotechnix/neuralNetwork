@@ -77,13 +77,11 @@ class neuralNetwork:
             for i in range(1, len(layerInformation)):
                 weightLayer = np.random.randn(layerInformation[i], layerInformation[i - 1])
                 self._weightMatrix.append(weightLayer)
-                print(f"weight between layer {i - 1} and layer {i}:\n{weightLayer}")
 
             # initialising random biases
             for i in range(1, len(layerInformation)):
                 biasLayer = np.random.randn(layerInformation[i])
                 self._biasMatrix.append(biasLayer.reshape(-1, 1))
-                print(f"bias matrix for layer {i}:\n{biasLayer}")
 
             for i in range(0, len(layerInformation)):
                 layer = np.zeros(layerInformation[i])
@@ -101,17 +99,13 @@ class neuralNetwork:
         # numpy exp function doesn't like large numbers, and its considered good practice anyway
         self._trainingData /= self._trainingData.max()
         self._testingData /= self._testingData.max()
-        print(self._trainingData[1])
         self.interpretCatagories(trainingLabels)
         self._trainingLabels = np.zeros([len(trainingData), len(self._catagoryDict), 1])
         for i in range(0, len(trainingLabels)):
             self._trainingLabels[i] = self._catagoryDict[str(trainingLabels[i])]
-        print(self._trainingLabels)
         self._testingLabels = np.zeros([len(testingData), len(self._catagoryDict), 1])
         for i in range(0, len(testingLabels)):
             self._testingLabels[i] = self._catagoryDict[str(testingLabels[i])]
-        print(self._catagoryDict)
-        print("$$$")
 
     #converts labels to a list of catagories, and assigns an output neuron for each
     #this assumes that the number of output neurons is already correct
@@ -123,8 +117,6 @@ class neuralNetwork:
         catagoryCount = len(catagories)
         for i in range(0, len(catagories)):
             catagories[i] = str(catagories[i])
-        print(catagories)
-        print(catagoryCount)
         self._catagoryDict = {}
         for i in range(0, catagoryCount):
             addArr = np.array([np.zeros(catagoryCount)])
@@ -289,32 +281,74 @@ class neuralNetwork:
                 correctCount += 1
         print(f"Training data accuracy = {correctCount / len(self._trainingData) * 100}%")
 
+
+    def displayAnswers(self):
+        reverseDict = {}
+
+        answerKey = np.argmax(self.feedForward(self._testingData), axis=0)
+        for i in self._catagoryDict:
+            reverseDict[np.argmax(self._catagoryDict[i])] = i
+        idx = 0
+        showList = []
+        while len(showList) < 50 or idx < 10000:
+            if answerKey[idx] != np.argmax(self._testingLabels[idx]):
+                showList.append(idx)
+            idx += 1
+
+
+        print("%%")
+        print(showList)
+
+        f, subpl = plt.subplots(5, 10)
+        for i in range(0, 5):
+            for j in range(0, 10):
+                subpl[i][j].imshow(self._testingData[showList[i * 10 + j]].reshape((28, 28)), cmap='gray', vmin=0, vmax=1)
+                subpl[i][j].set_title(reverseDict[answerKey[showList[i * 10 + j]]])
+                subpl[i][j].axis('off')
+        plt.show()
+
+
     def saveNetwork(self, path):
         print("Saving network...")
-        print("WEIGHT SHAPES:")
-        for i in self._weightMatrix:
-            print(i.shape)
-            print(i == i.flatten().reshape(i.shape))
 
         #going to flatten arrays to save them, and then reshape them afterwards using shapes i'll store
 
-        print("WEIGHTS:")
+        print("saving weights...")
         with open(path + "_weights", 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             for i in self._weightMatrix:
                 writer.writerow(i.shape)
                 writer.writerow(i.flatten())
-        print("BIASES:")
-        for i in self._biasMatrix:
-            print(i.flatten())
-            print("----------")
+
+
+        print("saving biases...")
+        with open(path + "_biases", 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            for i in self._biasMatrix:
+                writer.writerow(i.flatten())
+        print("Saved!")
 
             
     def loadNetwork(self, path):
+        #setting the weights
+        print("Loading weights...")
         with open(path + "_weights", 'r', newline='') as csvfile:
             reader = csv.reader(csvfile)
-            print(reader)
-            print("---")
+            weightArr = []
             for row in reader:
                 print(np.array(row))
-        
+                weightArr.append(np.array(row).astype(float))
+            for i in range(0, len(self._weightMatrix)):
+                self._weightMatrix[i] = np.reshape(weightArr[2 * i + 1], tuple(weightArr[2 * i].astype(int)))
+            print("Loaded weights")
+
+        print("Loading biases...")
+        with open(path + "_biases", 'r', newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            biasArr = []
+            for row in reader:
+                biasArr.append(np.array(row).astype(float))
+            for i in range(0, len(self._biasMatrix)):
+                self._biasMatrix[i] = biasArr[i].reshape(-1, 1)
+        print("Loaded biases")
+        print("Loaded!")
