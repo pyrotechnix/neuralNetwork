@@ -1,6 +1,4 @@
-import numpy
 import numpy as np
-import os
 from matplotlib import pyplot as plt
 import csv
 
@@ -103,14 +101,6 @@ class neuralNetwork:
             self._catagoryDict[catagories[i]] = addArr.T
         return self._catagoryDict
 
-    # Debug function to set values of weights and biases if you want to hand pick the values for some reason
-    def setValues(self, weights, biases):
-        print(self._weightMatrix)
-        self._weightMatrix = weights
-        print(self._weightMatrix)
-        print(self._biasMatrix)
-        self._biasMatrix = biases
-        print(self._biasMatrix)
 
     # inputs taken as list of arrays, since it converts the arrays to 2d matrices later anyway
     def feedForward(self, inputs):
@@ -187,8 +177,8 @@ class neuralNetwork:
                 self.feedForward(self._trainingData[j * batchSize:(j + 1) * batchSize])
                 self.backpropagate(self._trainingLabels[j * batchSize:(j + 1) * batchSize])
             if len(self._trainingData) % batchSize != 0:
-                self.feedForward((self._trainingData[-(len(self._trainingData) % batchSize):-1]))
-                self.backpropagate((self._trainingLabels[-(len(self._trainingLabels) % batchSize):-1]))
+                self.feedForward((self._trainingData[-(len(self._trainingData) % batchSize):]))
+                self.backpropagate((self._trainingLabels[-(len(self._trainingLabels) % batchSize):]))
             print(f"epoch number {i} completed")
             if i % 100 == 0:
                 print(f"for epoch number {i}:")
