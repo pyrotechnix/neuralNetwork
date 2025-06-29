@@ -12,3 +12,4 @@ Requirements:
 - Numpy (For the bulk of the calculations, I am using numpy matrices)
 - Idx2numpy (I am using this to convert the MNIST data to numpy arrays easily, I'm sure there are other ways but this way works well for me)
 - MatPlotLib (Currently I am using this to visualise the predictions once they have been made)
+- PIL (Used to convert images into a format that the neural network can work with)
