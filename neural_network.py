@@ -176,7 +176,7 @@ class neuralNetwork:
             self._activationValues[-1] = currentLayer
             #setting last layer of activation values too just in case
             # print(f"activation values:\n{self._activationValues}")
-            return currentLayer
+            return np.max(currentLayer, axis=0)
 
     #calculate the loss using MULTI ClASS CROSS ENTROPY 😨😨😨
     def calculateLoss(self, expected):
@@ -254,7 +254,7 @@ class neuralNetwork:
                 self.feedForward(self._trainingData[j*batchSize:(j+1)*batchSize])
                 self.backpropagate(self._trainingLabels[j*batchSize:(j+1)*batchSize])   
             print(f"epoch number {i} completed")
-            if i % 10 == 0:
+            if i % 100 == 0:
                 print(f"for epoch number {i}:")
                 self.testAccuracy()
 
@@ -278,15 +278,16 @@ class neuralNetwork:
                 correctCount += 1
                 print(correctCount)
         """
-
-        checkArray = np.argmax(self.feedForward(self._testingData), axis=0)
+        self.feedForward(self._testingData)
+        checkArray = np.argmax(self._activationValues[-1], axis=0)
         checkArray -= np.argmax(np.hstack(self._testingLabels), axis=0)
         for i in checkArray:
             if i == 0:
                 correctCount += 1
         print(f"Unseen accuracy = {correctCount / len(self._testingData) * 100}%")
         correctCount = 0
-        checkArray = np.argmax(self.feedForward(self._trainingData), axis=0)
+        self.feedForward(self._trainingData)
+        checkArray = np.argmax(self._activationValues[-1], axis=0)
         checkArray -= np.argmax(np.hstack(self._trainingLabels), axis=0)
         for i in checkArray:
             if i == 0:
@@ -296,8 +297,9 @@ class neuralNetwork:
 
     def displayAnswers(self):
         reverseDict = {}
-
-        answerKey = np.argmax(self.feedForward(self._testingData), axis=0)
+        confidences = self.feedForward(self._testingData)
+        print(confidences)
+        answerKey = np.argmax(self._activationValues[-1], axis=0)
         for i in self._catagoryDict:
             reverseDict[np.argmax(self._catagoryDict[i])] = i
         idx = 0
@@ -315,7 +317,8 @@ class neuralNetwork:
         for i in range(0, 5):
             for j in range(0, 10):
                 subpl[i][j].imshow(self._testingData[i * 10 + j].reshape((28, 28)), cmap='gray', vmin=0, vmax=1)
-                subpl[i][j].set_title(reverseDict[answerKey[i * 10 + j]])
+                currentConfidence = f"{(confidences[i * 10 + j]):.{3}f}"
+                subpl[i][j].set_title(reverseDict[answerKey[i * 10 + j]] + "\n" + currentConfidence)
                 subpl[i][j].axis('off')
         plt.show()
 
