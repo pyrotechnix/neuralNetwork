@@ -10,18 +10,20 @@ data_dir = "mnist_data"
 #TO DO: Fix shape of batches so that the loss is actually correct
 #FIXED
 #backpropogation
-#POSSIBLY DONE I DONT KNOW
-#Fix softmax so that it doesn't have zeros theres an explaination just follow it
+#POSSIBLY DONE I DON'T KNOW -------- DONE
+#Fix softmax so that it doesn't have zeros there's an explaination just follow it
 #FIXED
 #if I can be fucked fix the matrixes so that it doesn't use reduntant functions
 #FIXED
 #Impliment testing
 #FIXED
-#Impliment saving of network so that I dont have to retrain every time
+#Impliment saving of network so that I don't have to retrain every time
 #DONE
 
 #Impliment ui (probably with tkinter)
+#MISUNDERSTOOD You don't have to do this I might if I have time
 #impliment installer
+#MISUNDERSTOOD all I need to do is explain what libraries / python library is required
 
 #CHANGES
 #Add softmax instead of sigmoid for the output layer, since its better for class classification
