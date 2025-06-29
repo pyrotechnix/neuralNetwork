@@ -6,6 +6,7 @@ Specifications:
 - Using NumPY for calculations
 - Currently has 1 hidden layer of 100 neurons
 - Achieved 95% test accuracy on unseen data using MNIST dataset
+- Achieved 95+% test accuracy on character recognition with a variety of fonts
 
 Requirements:
 - Numpy (For the bulk of the calculations, I am using numpy matrices)
