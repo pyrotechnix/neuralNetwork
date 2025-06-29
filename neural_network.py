@@ -42,7 +42,18 @@ def sigmoidDerivativeBetter(sigNum):
 
 
 def activationFunction(n):
-    return np.maximum(0, n)
+    return np.maximum(-n * 0.01, n)
+
+
+def activationDerivative(n):
+
+    output_derivative = np.full_like(n, 0.01)
+
+    # For elements where arr > 0, set the derivative to 1.
+    # np.where is efficient for element-wise conditional operations.
+    output_derivative = np.where(n > 0, 1.0, output_derivative)
+    return output_derivative
+
 
 
 class neuralNetwork:
@@ -75,12 +86,12 @@ class neuralNetwork:
 
             # initialising random weights
             for i in range(1, len(layerInformation)):
-                weightLayer = np.random.randn(layerInformation[i], layerInformation[i - 1])
+                weightLayer = np.random.randn(layerInformation[i], layerInformation[i - 1]) / 10
                 self._weightMatrix.append(weightLayer)
 
             # initialising random biases
             for i in range(1, len(layerInformation)):
-                biasLayer = np.random.randn(layerInformation[i])
+                biasLayer = np.random.randn(layerInformation[i]) / 10
                 self._biasMatrix.append(biasLayer.reshape(-1, 1))
 
             for i in range(0, len(layerInformation)):
@@ -149,7 +160,8 @@ class neuralNetwork:
                 currentLayer = activationFunction(currentLayer)
                 self._activationValues[i + 1] = currentLayer
                 # print(f"layer {i + 1}: {currentLayer}\n-------")
-            currentLayer = matrixMultiply(self._weightMatrix[len(self._weightMatrix) - 1], currentLayer)
+            #currentLayer = matrixMultiply(self._weightMatrix[len(self._weightMatrix) - 1], currentLayer)
+            currentLayer = self._weightMatrix[len(self._weightMatrix) - 1] @ currentLayer
             # adding biases
             currentLayer = matrixAdd(matrixBroadcast(self._biasMatrix[len(self._biasMatrix) - 1], len(currentLayer[0])), currentLayer)
             #softmax function
@@ -174,7 +186,7 @@ class neuralNetwork:
         return -np.sum(losses) / len(losses[0])
 
     def backpropagate(self, expected):
-        learningRate = 0.05
+        learningRate = 0.01
         weightChanges = []
         biasChanges = []
         #giving us (actual - expected) / n
@@ -209,7 +221,7 @@ class neuralNetwork:
         #to the activation values will just be the weight, which will be averaged in the same way.
         for i in range(1, len(self._weightMatrix)):
             d_prevZ = self._weightMatrix[-i].T @ outputDerivatives
-            d_prevZ = d_prevZ * (self._activationValues[-i - 1] > 0).astype(float)
+            d_prevZ = d_prevZ * activationDerivative(self._activationValues[-i - 1])
             """print(f"activations for layer {len(self._weightMatrix) - i}")
             print(self._activationValues[-i - 1])
             print(f"errors for layer {len(self._weightMatrix) - i}")
@@ -290,9 +302,9 @@ class neuralNetwork:
             reverseDict[np.argmax(self._catagoryDict[i])] = i
         idx = 0
         showList = []
-        while len(showList) < 50 or idx < 10000:
-            if answerKey[idx] != np.argmax(self._testingLabels[idx]):
-                showList.append(idx)
+        while len(showList) < 50 or idx < 500:
+            #if answerKey[idx] != np.argmax(self._testingLabels[idx]):
+            showList.append(idx)
             idx += 1
 
 
@@ -302,8 +314,8 @@ class neuralNetwork:
         f, subpl = plt.subplots(5, 10)
         for i in range(0, 5):
             for j in range(0, 10):
-                subpl[i][j].imshow(self._testingData[showList[i * 10 + j]].reshape((28, 28)), cmap='gray', vmin=0, vmax=1)
-                subpl[i][j].set_title(reverseDict[answerKey[showList[i * 10 + j]]])
+                subpl[i][j].imshow(self._testingData[i * 10 + j].reshape((28, 28)), cmap='gray', vmin=0, vmax=1)
+                subpl[i][j].set_title(reverseDict[answerKey[i * 10 + j]])
                 subpl[i][j].axis('off')
         plt.show()
 

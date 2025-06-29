@@ -2,7 +2,8 @@ import neural_network
 import numpy as np
 import idx2numpy
 from matplotlib import pyplot as plt
-
+import os
+from PIL import Image
 
 data_dir = "mnist_data"
 
@@ -17,6 +18,7 @@ data_dir = "mnist_data"
 #Impliment testing
 #FIXED
 #Impliment saving of network so that I dont have to retrain every time
+#DONE
 
 #Impliment ui (probably with tkinter)
 #impliment installer
@@ -26,6 +28,42 @@ data_dir = "mnist_data"
 #switched to using multi class cross entropy outputs
 #switched to ReLU since sigmoid has issues
 #Changed softmax function to subtract a value from all exponentials to avoid over/underflow
+
+
+def loadImagesAndLabels(path):
+    """
+    Loads images and their corresponding labels from a specified directory.
+    Images are expected to be 28x28. Labels are extracted from the image filenames.
+
+    Args:
+        path (str): The directory path containing the image files.
+
+    Returns:
+        tuple: A tuple containing:
+            - imgArr (list of np.array): A list of images as NumPy arrays.
+            - labelArr (list of str): A list of labels as strings.
+    """
+    imageNames = []
+    imgArr = []
+    labelArr = []
+    print("Loading directories...")
+    # List all entries in the given path
+    for entry in os.listdir(path):
+        # Filter for image files (assuming .png, adjust if different)
+        if entry.endswith('.png'):
+            imageNames.append(entry)
+    print(f"Found {len(imageNames)} images. Converting images....")
+
+    for i in imageNames:
+        # Open each image using PIL
+        img = Image.open(os.path.join(path, i))
+        # Convert image to NumPy array and append
+        imgArr.append(np.array(img))
+        # Extract label: takes the last element after splitting by '_'
+        # and then removes the '.png' extension.
+        labelArr.append(i.split('_')[-1].split('.')[0])
+    print("Done!")
+    return np.array(imgArr), np.array(labelArr)
 
 
 def main():
@@ -40,10 +78,10 @@ def main():
     testingData = idx2numpy.convert_from_file(test_images_path)
     testingLabels = idx2numpy.convert_from_file(test_labels_path)
     #784 input layer 2x layers of 16 10 output neurons corresponding to each letter
-    nn = neural_network.neuralNetwork([784, 100, 10])
-    #nn.setValues([[[4, 8], [1, 10]], [[1, 1]]], [[[1], [4]], [[0], [0]]])
-    #
-    arr = trainingData[0]
+    nn = neural_network.neuralNetwork([784, 100, 50, 48])
+    trainingData, trainingLabels = loadImagesAndLabels("trainingImages")
+    testingData, testingLabels = loadImagesAndLabels("testingImages")
+    print(trainingLabels[0])
     nn.setTrainingData(trainingData, trainingLabels, testingData, testingLabels)
     while True:
         print("Please select an action:")
