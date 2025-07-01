@@ -84,7 +84,5 @@ def list_files_non_recursive(directory_path):
 fileList = list_files_non_recursive('fonts')
 print(fileList)
 
-getFont('Lora-Regular')
-
 for i in fileList:
     getFont(i)
