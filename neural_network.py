@@ -39,7 +39,8 @@ class neuralNetwork:
     _currentOutput = None
     _activationValues = None
     _catagoryDict = None
-
+    _currentInput = None
+    _categories = None
     def __init__(self, layerInformation):
         if len(layerInformation) < 3:
             print("Invalid, no hidden layer")
@@ -76,7 +77,7 @@ class neuralNetwork:
         # Normalizing i guess you could call it
         self._trainingData /= self._trainingData.max()
         self._testingData /= self._testingData.max()
-        self.interpretCatagories(trainingLabels)
+        self.interpretcategories(trainingLabels)
         self._trainingLabels = np.zeros([len(trainingData), len(self._catagoryDict), 1])
         for i in range(0, len(trainingLabels)):
             self._trainingLabels[i] = self._catagoryDict[str(trainingLabels[i])]
@@ -84,23 +85,23 @@ class neuralNetwork:
         for i in range(0, len(testingLabels)):
             self._testingLabels[i] = self._catagoryDict[str(testingLabels[i])]
 
-    # converts labels to a list of catagories, and assigns an output neuron for each
+    # converts labels to a list of categories, and assigns an output neuron for each
     # this assumes that the number of output neurons is already correct
-    def interpretCatagories(self, labels):
-        catagories = []
+    def interpretcategories(self, labels):
+        self._categories = []
         for i in labels:
-            if i not in catagories:
-                catagories.append(i)
-        catagoryCount = len(catagories)
-        for i in range(0, len(catagories)):
-            catagories[i] = str(catagories[i])
+            if i not in self._categories:
+                self._categories.append(i)
+        catagoryCount = len(self._categories)
+        for i in range(0, len(self._categories)):
+            self._categories[i] = str(self._categories[i])
+        print(self._categories)
         self._catagoryDict = {}
         for i in range(0, catagoryCount):
             addArr = np.array([np.zeros(catagoryCount)])
             addArr[0][i] = 1
-            self._catagoryDict[catagories[i]] = addArr.T
+            self._catagoryDict[self._categories[i]] = addArr.T
         return self._catagoryDict
-
 
     # inputs taken as list of arrays, since it converts the arrays to 2d matrices later anyway
     def feedForward(self, inputs):
@@ -143,7 +144,7 @@ class neuralNetwork:
         return -np.sum(losses) / len(losses[0])
 
     def backpropagate(self, expected):
-        learningRate = 0.01
+        learningRate = 0.0005
         weightChanges = []
         biasChanges = []
         outputDerivatives = (self._currentOutput - np.hstack(expected)) / len(self._currentOutput[0])
@@ -180,7 +181,7 @@ class neuralNetwork:
                 self.feedForward((self._trainingData[-(len(self._trainingData) % batchSize):]))
                 self.backpropagate((self._trainingLabels[-(len(self._trainingLabels) % batchSize):]))
             print(f"epoch number {i} completed")
-            if i % 100 == 0:
+            if i % 10 == 0:
                 print(f"for epoch number {i}:")
                 self.testAccuracy()
 
@@ -203,27 +204,42 @@ class neuralNetwork:
                 correctCount += 1
         print(f"Training data accuracy = {correctCount / len(self._trainingData) * 100}%")
 
+
+    def makeInput(self, arr):
+        self._currentInput = arr
+        self.feedForward(arr)
+
     # displaying the results of the feed forward predictions using matplotlib
     def displayAnswers(self):
         reverseDict = {}
         confidences = self.feedForward(self._testingData)
+        for i in self._catagoryDict:
+            reverseDict[np.argmax(self._catagoryDict[i])] = i
+
+
+        f, subpl = plt.subplots(4, 10)
+        for i in range(0, 4):
+            for j in range(0, 10):
+                subpl[i][j].imshow(self._testingData[i * 10 + j].reshape((28, 28)), cmap='gray', vmin=0, vmax=1)
+                currentConfidence = f"{(confidences[i * 10 + j]):.{3}f}"
+                subpl[i][j].set_title(reverseDict[i * 10 + j] + "\n" + currentConfidence)
+                subpl[i][j].axis('off')
+        plt.show()
+
+    def displayAnswersUsingAsciiCode(self):
+        reverseDict = {}
+        confidences = self.feedForward(self._currentInput)
         print(confidences)
         answerKey = np.argmax(self._activationValues[-1], axis=0)
         for i in self._catagoryDict:
             reverseDict[np.argmax(self._catagoryDict[i])] = i
-        idx = 0
-        showList = []
-        while len(showList) < 50 or idx < 500:
-            # if answerKey[idx] != np.argmax(self._testingLabels[idx]):
-            showList.append(idx)
-            idx += 1
 
-        f, subpl = plt.subplots(5, 10)
-        for i in range(0, 5):
+        f, subpl = plt.subplots(4, 10)
+        for i in range(0, 4):
             for j in range(0, 10):
-                subpl[i][j].imshow(self._testingData[i * 10 + j].reshape((28, 28)), cmap='gray', vmin=0, vmax=1)
+                subpl[i][j].imshow(self._currentInput[i * 10 + j].reshape((28, 28)), cmap='gray', vmin=0, vmax=1)
                 currentConfidence = f"{(confidences[i * 10 + j]):.{3}f}"
-                subpl[i][j].set_title(reverseDict[answerKey[i * 10 + j]] + "\n" + currentConfidence)
+                subpl[i][j].set_title(chr(int(reverseDict[answerKey[i * 10 + j]])) + "\n" + currentConfidence)
                 subpl[i][j].axis('off')
         plt.show()
 
@@ -243,6 +259,10 @@ class neuralNetwork:
             for i in self._biasMatrix:
                 writer.writerow(i.flatten())
         print("Saved!")
+        print("saving categories...")
+        with open(path + "_categories", 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(self._categories)
 
     # Loading saved network
     # NOTE: Assumes that the network doesn't have more layers than the loaded network, since if it does
@@ -254,7 +274,6 @@ class neuralNetwork:
             reader = csv.reader(csvfile)
             weightArr = []
             for row in reader:
-                print(np.array(row))
                 weightArr.append(np.array(row).astype(float))
             for i in range(0, len(self._weightMatrix)):
                 self._weightMatrix[i] = np.reshape(weightArr[2 * i + 1], tuple(weightArr[2 * i].astype(int)))
@@ -269,4 +288,12 @@ class neuralNetwork:
             for i in range(0, len(self._biasMatrix)):
                 self._biasMatrix[i] = biasArr[i].reshape(-1, 1)
         print("Loaded biases")
+        print("Loading categories...")
+        with open(path + "_categories", 'r', newline='') as csvfile:
+            reader = csv.reader(csvfile)
+            categories = None
+            for row in reader:
+                categories = np.array(row).astype(str)
+            self.interpretcategories(categories)
+        print('Loaded categories')
         print("Loaded!")

@@ -6,65 +6,85 @@ import string
 size = 28
 img_size = (size, size)
 font_size = 32
-output_dir = "character_images"
-#You will need to download the font and provide the path
-font_path = "Fonts\\Oxygen-Bold.ttf"
-#Don't forget to update the encoding!
-encoding = "oxygen_bold_32"
 
-'''
-This program will generate a list of characters as images.
-Set the font size and path above, adjust the filename encoding as desired
-At the start of the loop, you can name the character set to be used
-'''
+def getFont(fontName):
+    output_dir = "character_images"
+    #You will need to download the font and provide the path
+    font_path = f"fonts\{fontName}.ttf"
+    #Don't forget to update the encoding!
+    encoding = f"{fontName}"
 
-# Ensure output directory exists
-os.makedirs(output_dir, exist_ok=True)
+    '''
+    This program will generate a list of characters as images.
+    Set the font size and path above, adjust the filename encoding as desired
+    At the start of the loop, you can name the character set to be used
+    '''
 
-# Load the font
-font = ImageFont.truetype(font_path, font_size)
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
 
-upperLetters = [chr(i) for i in range(65,91)]
-lowerLetters = [chr(i) for i in range(97,123)]
-numbers = [chr(i) for i in range(48,58)]
-characters = upperLetters + lowerLetters + numbers
+    # Load the font
+    font = ImageFont.truetype(font_path, font_size)
 
-''' Loop through chosen character set '''
-for letter in characters:  
-    print(f"Creating image of: {letter}")
-    # Create a new white image
-    img = Image.new("L", img_size, color="white")
-    draw = ImageDraw.Draw(img)
+    upperLetters = [chr(i) for i in range(65,91)]
+    lowerLetters = [chr(i) for i in range(97,123)]
+    numbers = [chr(i) for i in range(48,58)]
+    characters = upperLetters + lowerLetters + numbers
 
-    # Get size of text to center it
-    bbox = draw.textbbox((0, 0), letter, font=font)
-    text_width = bbox[2] - bbox[0]
-    text_height = bbox[3] - bbox[1]
-    position = ( (0-bbox[0]+((size-text_width)//2)),
-                 (0-bbox[1]+((size-text_height)//2)))
-    # Draw the character
-    draw.text(position, letter, fill="black", font=font)
+    ''' Loop through chosen character set '''
+    for letter in characters:  
+        print(f"Creating image of: {letter}")
+        # Create a new white image
+        img = Image.new("L", img_size, color="white")
+        draw = ImageDraw.Draw(img)
 
-    # Save image
-    img.save(os.path.join(output_dir, f"{encoding}_{letter}.png"))
+        # Get size of text to center it
+        bbox = draw.textbbox((0, 0), letter, font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        position = ( (0-bbox[0]+((size-text_width)//2)),
+                     (0-bbox[1]+((size-text_height)//2)))
+        # Draw the character
+        draw.text(position, letter, fill="black", font=font)
 
-#Comment out the code below to exclude symbols
-symbols = ['!', '@', '#', '$', '%', '&', '*', '+', '-', '?', '<', '>']
-symwords = ['exclmark', 'at', 'hash', 'dollar', 'percent', 'ampersand', 'asterisk', 'plus', 'minus', 'quesmark', 'lessthan', 'greaterthan']
-for i in range(len(symbols)):
-    print(f"Creating image of: {symwords[i]}")
-    # Create a new white image
-    img = Image.new("L", img_size, color="white")
-    draw = ImageDraw.Draw(img)
+        # Save image
+        img.save(os.path.join(output_dir, f"{encoding}_{ord(letter)}.png"))
 
-    # Get size of text to center it
-    bbox = draw.textbbox((0, 0), symbols[i], font=font)
-    text_width = bbox[2] - bbox[0]
-    text_height = bbox[3] - bbox[1]
-    position = ( (0-bbox[0]+((size-text_width)//2)),
-                 (0-bbox[1]+((size-text_height)//2)))
-    # Draw the character
-    draw.text(position, symbols[i], fill="black", font=font)
+    #Comment out the code below to exclude symbols
+    symbols = ['!', '@', '#', '$', '%', '&', '*', '+', '-', '?', '<', '>']
+    symwords = ['exclmark', 'at', 'hash', 'dollar', 'percent', 'ampersand', 'asterisk', 'plus', 'minus', 'quesmark', 'lessthan', 'greaterthan']
+    for i in range(len(symbols)):
+        print(f"Creating image of: {symwords[i]}")
+        # Create a new white image
+        img = Image.new("L", img_size, color="white")
+        draw = ImageDraw.Draw(img)
 
-    # Save image
-    img.save(os.path.join(output_dir, f"{encoding}_{symwords[i]}.png"))
+        # Get size of text to center it
+        bbox = draw.textbbox((0, 0), symbols[i], font=font)
+        text_width = bbox[2] - bbox[0]
+        text_height = bbox[3] - bbox[1]
+        position = ( (0-bbox[0]+((size-text_width)//2)),
+                     (0-bbox[1]+((size-text_height)//2)))
+        # Draw the character
+        draw.text(position, symbols[i], fill="black", font=font)
+
+        # Save image
+        img.save(os.path.join(output_dir, f"{encoding}_{ord(symbols[i])}.png"))
+
+
+def list_files_non_recursive(directory_path):
+    """Lists all files in a given directory, without recursing into subdirectories."""
+    files = []
+    for entry in os.listdir(directory_path):
+        full_path = os.path.join(directory_path, entry)
+        if os.path.isfile(full_path):
+            files.append(entry.split('.')[0])
+    return files
+
+fileList = list_files_non_recursive('fonts')
+print(fileList)
+
+
+
+for i in fileList:
+    getFont(i)
