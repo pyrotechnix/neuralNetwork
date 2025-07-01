@@ -24,23 +24,26 @@ def activationDerivative(n):
 
 
 class neuralNetwork:
-    # takes inputNum as integer, outputNum as integer, layerInformation as list of ints detailing how many neurons
-    # per layer
+
     inputCount = None
     # defining variables to help keep track of the number of inputs and outputs, these are just defined with
     # layerInformation anyway, so it's not really that important
     _weightMatrix = None
-    # shouldn't need a matrix of neurons since the vector multiplication should output the value for the neurons anyway
     _biasMatrix = None
     _trainingData = None
     _trainingLabels = None
     _testingData = None
     _testingLabels = None
-    _currentOutput = None
-    _activationValues = None
-    _catagoryDict = None
     _currentInput = None
+    _currentOutput = None
+    # Stored activation values across the entire network when data is fed through
+    _activationValues = None
+    # Dictionary keeping track of which catagory responds to which output neuron
+    _catagoryDict = None
+    # List of catagories
     _categories = None
+
+    # takes layerInformation as list of ints detailing how many neurons per layer
     def __init__(self, layerInformation):
         if len(layerInformation) < 3:
             print("Invalid, no hidden layer")
@@ -60,11 +63,12 @@ class neuralNetwork:
                 biasLayer = np.random.randn(layerInformation[i]) / 10
                 self._biasMatrix.append(biasLayer.reshape(-1, 1))
 
+            # creating an array in the correct shape to later store activation values
             for i in range(0, len(layerInformation)):
                 layer = np.zeros(layerInformation[i])
                 self._activationValues.append(layer.reshape(-1, 1))
 
-    # trainingData should be only a 2 dimensional array, as it is converted into a 2 dimensional matrix later
+    # trainingData should be only a 2-dimensional array, as it is converted into a 2-dimensional matrix later
     def setTrainingData(self, trainingData, trainingLabels, testingData, testingLabels):
         self._trainingData = np.zeros([len(trainingData), len(trainingData[0].flatten())])
         self._testingData = np.zeros([len(testingData), len(trainingData[0].flatten())])
@@ -74,11 +78,12 @@ class neuralNetwork:
             self._testingData[i] = testingData[i].flatten()
         # diving all values by the max to keep them in between 0 and 1 instead of making them big, since the
         # numpy exp function doesn't like large numbers, and its considered good practice anyway
-        # Normalizing i guess you could call it
+        # Normalizing I guess you could call it
         self._trainingData /= self._trainingData.max()
         self._testingData /= self._testingData.max()
         self.interpretcategories(trainingLabels)
         self._trainingLabels = np.zeros([len(trainingData), len(self._catagoryDict), 1])
+        # Assigning each label to its corresponding output neuron
         for i in range(0, len(trainingLabels)):
             self._trainingLabels[i] = self._catagoryDict[str(trainingLabels[i])]
         self._testingLabels = np.zeros([len(testingData), len(self._catagoryDict), 1])
@@ -92,13 +97,12 @@ class neuralNetwork:
         for i in labels:
             if i not in self._categories:
                 self._categories.append(i)
-        catagoryCount = len(self._categories)
+        categoryCount = len(self._categories)
         for i in range(0, len(self._categories)):
             self._categories[i] = str(self._categories[i])
-        print(self._categories)
         self._catagoryDict = {}
-        for i in range(0, catagoryCount):
-            addArr = np.array([np.zeros(catagoryCount)])
+        for i in range(0, categoryCount):
+            addArr = np.array([np.zeros(categoryCount)])
             addArr[0][i] = 1
             self._catagoryDict[self._categories[i]] = addArr.T
         return self._catagoryDict
@@ -136,13 +140,12 @@ class neuralNetwork:
             # Returning confidence scores for each layer
             return np.max(currentLayer, axis=0)
 
-    # calculate the loss using multi class cross entropy
-    def calculateLoss(self, expected):
-        losses = np.hstack(expected) * np.log(self._currentOutput)
-        print("Total loss:")
-        print(np.sum(losses))
-        return -np.sum(losses) / len(losses[0])
-
+    # backpropagates through the network using gradient descent, takes expected but to be honest
+    # in 99% of cases expected will just be training labels. However, it helps to pass it as a
+    # paramater due to the batch training approach. Since current outputs are stored, it is
+    # easier to simply pass the labels corresponding to those outputs, rather than to try and work
+    # out where they are in the label array
+    # note: DOES NOT FEED FORWARD! This function assumes that the feed forward has already happened!
     def backpropagate(self, expected):
         learningRate = 0.0005
         weightChanges = []
@@ -163,6 +166,7 @@ class neuralNetwork:
             biasChanges.append(np.sum(d_prevZ, axis=1, keepdims=True))
             outputDerivatives = d_prevZ
             # making changes to weight and biases
+            # traverses change array backwads, since I append to them in reverese order.
         for i in range(0, len(self._weightMatrix)):
             self._weightMatrix[i] -= weightChanges[-1 - i] * learningRate
         for i in range(0, len(self._biasMatrix)):
@@ -178,6 +182,7 @@ class neuralNetwork:
                 self.feedForward(self._trainingData[j * batchSize:(j + 1) * batchSize])
                 self.backpropagate(self._trainingLabels[j * batchSize:(j + 1) * batchSize])
             if len(self._trainingData) % batchSize != 0:
+                # handles cases where the number of samples is not divisible by the batch size
                 self.feedForward((self._trainingData[-(len(self._trainingData) % batchSize):]))
                 self.backpropagate((self._trainingLabels[-(len(self._trainingLabels) % batchSize):]))
             print(f"epoch number {i} completed")
@@ -186,6 +191,7 @@ class neuralNetwork:
                 self.testAccuracy()
 
     # Testing the accuracy of the network
+    # very simple, feeds forward training and testing data and assesses accuracy.
     def testAccuracy(self):
         correctCount = 0
         self.feedForward(self._testingData)
@@ -204,32 +210,24 @@ class neuralNetwork:
                 correctCount += 1
         print(f"Training data accuracy = {correctCount / len(self._trainingData) * 100}%")
 
-
-    def makeInput(self, arr):
+    # Higher level function to make an input, since I didn't actually have one before
+    def makeInput(self, arr, fileNames):
         self._currentInput = arr
-        self.feedForward(arr)
-
-    # displaying the results of the feed forward predictions using matplotlib
-    def displayAnswers(self):
+        confidences = self.feedForward(arr)
+        answerKey = np.argmax(self._activationValues[-1], axis=0)
         reverseDict = {}
-        confidences = self.feedForward(self._testingData)
         for i in self._catagoryDict:
             reverseDict[np.argmax(self._catagoryDict[i])] = i
 
+        for i in range(0, len(arr)):
+            print(f"Prediction for file {fileNames[i]}: {chr(int(reverseDict[answerKey[i]]))}")
+            print(f"Confidence: {confidences[i]}")
 
-        f, subpl = plt.subplots(4, 10)
-        for i in range(0, 4):
-            for j in range(0, 10):
-                subpl[i][j].imshow(self._testingData[i * 10 + j].reshape((28, 28)), cmap='gray', vmin=0, vmax=1)
-                currentConfidence = f"{(confidences[i * 10 + j]):.{3}f}"
-                subpl[i][j].set_title(reverseDict[i * 10 + j] + "\n" + currentConfidence)
-                subpl[i][j].axis('off')
-        plt.show()
-
-    def displayAnswersUsingAsciiCode(self):
+    # Displays answers using matplotlib
+    # If toChar is true, it will assume that the inputs are ascii codes to convert to characters.
+    def displayOutput(self, toChar):
         reverseDict = {}
         confidences = self.feedForward(self._currentInput)
-        print(confidences)
         answerKey = np.argmax(self._activationValues[-1], axis=0)
         for i in self._catagoryDict:
             reverseDict[np.argmax(self._catagoryDict[i])] = i
@@ -239,7 +237,10 @@ class neuralNetwork:
             for j in range(0, 10):
                 subpl[i][j].imshow(self._currentInput[i * 10 + j].reshape((28, 28)), cmap='gray', vmin=0, vmax=1)
                 currentConfidence = f"{(confidences[i * 10 + j]):.{3}f}"
-                subpl[i][j].set_title(chr(int(reverseDict[answerKey[i * 10 + j]])) + "\n" + currentConfidence)
+                if toChar:
+                    subpl[i][j].set_title(chr(int(reverseDict[answerKey[i * 10 + j]])) + "\n" + currentConfidence)
+                else:
+                    subpl[i][j].set_title(reverseDict[answerKey[i * 10 + j]] + "\n" + currentConfidence)
                 subpl[i][j].axis('off')
         plt.show()
 

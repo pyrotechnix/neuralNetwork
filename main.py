@@ -5,7 +5,6 @@ import os
 import PIL
 from PIL import Image
 import random
-import matplotlib.pyplot as plt
 
 np.set_printoptions(suppress=False, precision=3)
 
@@ -22,6 +21,8 @@ np.set_printoptions(suppress=False, precision=3)
 # FIXED
 # Impliment saving of network so that I don't have to retrain every time
 # DONE
+#Fix output display so that if there are less than 40 images it won't break
+
 
 # Impliment ui (probably with tkinter)
 # MISUNDERSTOOD You don't have to do this I might if I have time
@@ -89,6 +90,7 @@ def loadImagesAndLabelsRandomRotation(path):
 def loadImages(path):
     imageNames = []
     imgArr = []
+
     print("Loading directories...")
     for entry in os.listdir(path):
         if entry.endswith('.png'):
@@ -98,11 +100,12 @@ def loadImages(path):
         # Open each image using PIL
         img = Image.open(os.path.join(path, i))
         img = img.convert('L')
+        #img = img.rotate(random.randint(-20, 20), PIL.Image.NEAREST, expand=0)
         # Convert image to NumPy array and append
         imgArr.append(np.array(img))
     print("Done!")
     print(f"Created array of {len(imgArr)} length")
-    return np.array(imgArr)
+    return np.array(imgArr), imageNames
 
 
 def main():
@@ -121,6 +124,9 @@ def main():
 
     nn = neural_network.neuralNetwork([784, 100, 50, 74])
 
+    # If you want the training data to load by default
+    # Commented out because user will not be expected to have training or testing data
+
     """
     print("Loading default training data...")
     trainingData, trainingLabels = loadImagesAndLabels("character_images")
@@ -136,10 +142,14 @@ def main():
         print("\tT: Train network")
         print("\tS: Save network")
         print("\tL: Load network")
-        print("\tR: Test network")
+        print("\tR: Make input")
         print("\tQ: Quit")
         trainInput = input("Action: ")
+
         if trainInput == 'i' or trainInput == 'I':
+            print("Please ensure that all images end with an underscore followed by the character "
+                  "(i.e. character_a.png)")
+            print("faliure to do so may result in errors or unexpected results")
             directoryInput = input("Please enter directory: ")
             try:
                 trainingData, trainingLabels = loadImagesAndLabels(directoryInput)
@@ -147,22 +157,28 @@ def main():
                 nn.setTrainingData(trainingData, trainingLabels, testingData, testingLabels)
             except FileNotFoundError:
                 print("Invalid file directory, please try again")
-        if trainInput == 't' or trainInput == 'T':
+
+        elif trainInput == 't' or trainInput == 'T':
             epochCount = int(input("How many epochs? "))
             print("Training...")
             nn.train(epochCount)
             nn.testAccuracy()
+
         elif trainInput == 's' or trainInput == 'S':
             nn.saveNetwork("neuralNetwork")
+
         elif trainInput == 'l' or trainInput == 'L':
             nn.loadNetwork("neuralNetwork")
+
         elif trainInput == 'r' or trainInput == 'R':
             directoryInput = input("Please enter directory: ")
             try:
-                #newInput = loadImagesAndLabelsRandomRotation(directoryInput)[0]
-                newInput = loadImages(directoryInput)
-                nn.makeInput(newInput.reshape(len(newInput), -1) / 255)
-                nn.displayAnswersUsingAsciiCode()
+                # Having to do a slight workaround, since I need the filenames to be passed in, but
+                # I don't usually store them. But in this case, they are useful to identify output
+                # if there are too many files to be displayed.
+                newInput, inputFileNames = loadImages(directoryInput)
+                nn.makeInput(newInput.reshape(len(newInput), -1) / 255, inputFileNames)
+                nn.displayOutput(True)
                 try:
                     nn.testAccuracy()
                 except TypeError:
@@ -171,11 +187,12 @@ def main():
                 print("Invalid file directory, please try again")
             except TypeError:
                 print("!-----------------------------------------------!\n")
-                print("Please input training data in correct format and try again")
+                print("Please ensure that the neural network loaded is designed for this data")
                 print("\n!-----------------------------------------------!")
 
         elif trainInput == 'q' or trainInput == 'Q':
             running = False
+
         else:
             print("Invalid input, please retry")
 
