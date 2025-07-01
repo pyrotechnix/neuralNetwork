@@ -1,6 +1,5 @@
 import neural_network
 import numpy as np
-import idx2numpy
 import os
 import PIL
 from PIL import Image
@@ -21,7 +20,7 @@ np.set_printoptions(suppress=False, precision=3)
 # FIXED
 # Impliment saving of network so that I don't have to retrain every time
 # DONE
-#Fix output display so that if there are less than 40 images it won't break
+# Fix output display so that if there are less than 40 images it won't break
 
 
 # Impliment ui (probably with tkinter)
@@ -132,6 +131,8 @@ def main():
     nn.setTrainingData(trainingData, trainingLabels, testingData, testingLabels)
     """
 
+    nn.loadNetwork("neuralNetwork")
+
     running = True
     while running:
         print("Please select an action:")
@@ -156,11 +157,18 @@ def main():
                 print("Invalid file directory, please try again")
 
         elif trainInput == 't' or trainInput == 'T':
-            epochCount = int(input("How many epochs? "))
-            print("Training...")
-            nn.train(epochCount)
-            nn.testAccuracy()
-
+            epochCount = input("How many epochs? ")
+            try:
+                epochCount = int(epochCount)
+                print("Training...")
+                nn.train(epochCount)
+                nn.testAccuracy()
+            except ValueError:
+                print("Please enter a valid integer")
+            except TypeError:
+                print("!-----------------------------------------------!\n")
+                print("Please ensure that training data is loaded")
+                print("\n!-----------------------------------------------!")
         elif trainInput == 's' or trainInput == 'S':
             nn.saveNetwork("neuralNetwork")
 
