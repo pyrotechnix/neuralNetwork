@@ -58,7 +58,6 @@ def loadImagesAndLabels(path):
             # and then removes the '.png' extension.
             labelArr.append(i.split('_')[-1].split('.')[0])
     print("Done!")
-    print(f"Created array of {len(imgArr)} length")
     return np.array(imgArr), np.array(labelArr)
 
 
@@ -83,7 +82,6 @@ def loadImagesAndLabelsRandomRotation(path):
         # and then removes the '.png' extension.
         labelArr.append(i.split('_')[-1].split('.')[0])
     print("Done!")
-    print(f"Created array of {len(imgArr)} length")
     return np.array(imgArr), np.array(labelArr)
 
 
@@ -104,7 +102,6 @@ def loadImages(path):
         # Convert image to NumPy array and append
         imgArr.append(np.array(img))
     print("Done!")
-    print(f"Created array of {len(imgArr)} length")
     return np.array(imgArr), imageNames
 
 
