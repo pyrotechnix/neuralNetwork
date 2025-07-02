@@ -1,4 +1,4 @@
-## ALL FONTS CURRENTLY USED IN TRAINING
+ALL FONTS CURRENTLY USED IN TRAINING
 Cookie-Regular
 DancingScript-Bold
 DancingScript-Medium
