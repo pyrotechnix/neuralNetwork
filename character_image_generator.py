@@ -10,7 +10,7 @@ font_size = 32
 def getFont(fontName):
     output_dir = "character_images"
     #You will need to download the font and provide the path
-    font_path = f"fonts\{fontName}.ttf"
+    font_path = f"fonts\\{fontName}.ttf"
     #Don't forget to update the encoding!
     encoding = f"{fontName}"
 
@@ -82,7 +82,9 @@ def list_files_non_recursive(directory_path):
     return files
 
 fileList = list_files_non_recursive('fonts')
-print(fileList)
-
 for i in fileList:
-    getFont(i)
+    print(i)
+
+
+#for i in fileList:
+#    getFont(i)

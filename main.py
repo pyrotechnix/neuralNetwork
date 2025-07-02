@@ -97,7 +97,7 @@ def loadImages(path):
         # Open each image using PIL
         img = Image.open(os.path.join(path, i))
         img = img.convert('L')
-        #img = img.rotate(random.randint(-20, 20), PIL.Image.NEAREST, expand=0)
+        img = img.rotate(random.randint(-20, 20), PIL.Image.NEAREST, expand=0)
         # Convert image to NumPy array and append
         imgArr.append(np.array(img))
     print("Done!")
@@ -182,6 +182,7 @@ def main():
                 # I don't usually store them. But in this case, they are useful to identify output
                 # if there are too many files to be displayed.
                 newInput, inputFileNames = loadImages(directoryInput)
+                np.random.shuffle(newInput)
                 nn.makeInput(newInput.reshape(len(newInput), -1) / 255, inputFileNames)
                 nn.displayOutput(True)
                 try:
