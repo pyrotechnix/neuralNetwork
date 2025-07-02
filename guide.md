@@ -4,7 +4,7 @@
 - MatPlotLib
   - Install with 'pip install matplotlib'
 - PIL
-  - Install with 'pip install pillow
+  - Install with 'pip install pillow'
 
 ## FONTS USED IN TRAINING
 For a full list of fonts used, please see font_list.txt
