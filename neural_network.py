@@ -40,6 +40,7 @@ class neuralNetwork:
     _activationValues = None
     # Dictionary keeping track of which catagory responds to which output neuron
     _catagoryDict = None
+    _reverseDict = None
     # List of catagories
     _categories = None
 
@@ -67,6 +68,23 @@ class neuralNetwork:
             for i in range(0, len(layerInformation)):
                 layer = np.zeros(layerInformation[i])
                 self._activationValues.append(layer.reshape(-1, 1))
+
+
+    def reset(self):
+        print("Resetting network...")
+        # initialising random weights
+        for i in range(1, len(self._weightMatrix)):
+            originalShape = self._weightMatrix[i].shape
+            weightLayer = np.random.randn(*originalShape) / 10
+            self._weightMatrix[i] = weightLayer
+
+        # initialising random biases
+        for i in range(1, len(self._biasMatrix)):
+            originalShape = self._biasMatrix[i].shape
+            biasLayer = np.random.randn(*originalShape) / 10
+            self._biasMatrix[i] = biasLayer
+        print("Network reset")
+
 
     # trainingData should be only a 2-dimensional array, as it is converted into a 2-dimensional matrix later
     def setTrainingData(self, trainingData, trainingLabels, testingData, testingLabels):
@@ -105,6 +123,9 @@ class neuralNetwork:
             addArr = np.array([np.zeros(categoryCount)])
             addArr[0][i] = 1
             self._catagoryDict[self._categories[i]] = addArr.T
+        self._reverseDict = {}
+        for i in self._catagoryDict:
+            self._reverseDict[np.argmax(self._catagoryDict[i])] = i
         return self._catagoryDict
 
     # inputs taken as list of arrays, since it converts the arrays to 2d matrices later anyway
@@ -215,33 +236,31 @@ class neuralNetwork:
         self._currentInput = arr
         confidences = self.feedForward(arr)
         answerKey = np.argmax(self._activationValues[-1], axis=0)
-        reverseDict = {}
-        for i in self._catagoryDict:
-            reverseDict[np.argmax(self._catagoryDict[i])] = i
-
         for i in range(0, len(arr)):
-            print(f"Prediction for file {fileNames[i]}: {chr(int(reverseDict[answerKey[i]]))}")
+            print(f"Prediction for file {fileNames[i]}: {chr(int(self._reverseDict[answerKey[i]]))}")
             print(f"Confidence: {confidences[i]}")
+            print("")
 
     # Displays answers using matplotlib
     # If toChar is true, it will assume that the inputs are ascii codes to convert to characters.
     def displayOutput(self, toChar):
-        reverseDict = {}
         confidences = self.feedForward(self._currentInput)
         answerKey = np.argmax(self._activationValues[-1], axis=0)
-        for i in self._catagoryDict:
-            reverseDict[np.argmax(self._catagoryDict[i])] = i
-
         f, subpl = plt.subplots(4, 10)
         for i in range(0, 4):
             for j in range(0, 10):
-                subpl[i][j].imshow(self._currentInput[i * 10 + j].reshape((28, 28)), cmap='gray', vmin=0, vmax=1)
-                currentConfidence = f"{(confidences[i * 10 + j]):.{3}f}"
-                if toChar:
-                    subpl[i][j].set_title(chr(int(reverseDict[answerKey[i * 10 + j]])) + "\n" + currentConfidence)
+                if (i * 10 + j) < len(confidences):
+                    subpl[i][j].imshow(self._currentInput[i * 10 + j].reshape((28, 28)), cmap='gray', vmin=0, vmax=1)
+                    currentConfidence = f"{(confidences[i * 10 + j]):.{3}f}"
+                    if toChar:
+                        subpl[i][j].set_title(chr(int(self._reverseDict[answerKey[i * 10 + j]])) + "\n" + currentConfidence)
+                    else:
+                        subpl[i][j].set_title(self._reverseDict[answerKey[i * 10 + j]] + "\n" + currentConfidence)
+                    subpl[i][j].axis('off')
                 else:
-                    subpl[i][j].set_title(reverseDict[answerKey[i * 10 + j]] + "\n" + currentConfidence)
-                subpl[i][j].axis('off')
+                    subpl[i][j].imshow(np.ones((28, 28)), cmap='gray', vmin=0, vmax=1)
+                    subpl[i][j].axis('off')
+
         plt.show()
 
     # Saves network to a file so that it can be reloaded later
@@ -298,3 +317,34 @@ class neuralNetwork:
             self.interpretcategories(categories)
         print('Loaded categories')
         print("Loaded!")
+
+
+    def generateTestReport(self, inputs, fileNames):
+        self._currentInput = inputs
+        confidences = self.feedForward(inputs)
+        answerKey = np.argmax(self._activationValues[-1], axis=0)
+        actual = []
+        fonts = []
+        for i in range(0, len(fileNames)):
+            actual.append(chr(int(fileNames[i].split('_')[-1].split('.')[0])))
+            fonts.append(fileNames[i].split('_')[0])
+        print(actual)
+        passCount = 0
+        failCount = 0
+        with open('testReport.csv', 'w') as file:
+            file.write("ID, Font, Prediction, Actual, Confidence, Pass/Fail\n")
+            for i in range(0, len(answerKey)):
+                addStr = f"{i}, "
+                addStr += f"{fonts[i]}, "
+                addStr += f"{chr(int(self._reverseDict[answerKey[i]]))}, "
+                addStr += f"{actual[i]}, "
+                addStr += f"{confidences[i]:.{3}f}, "
+                if chr(int(self._reverseDict[answerKey[i]])) == actual[i]:
+                    addStr += "PASS"
+                    passCount += 1
+                else:
+                    addStr += "FAIL"
+                    failCount += 1
+                file.write(addStr + '\n')
+            file.write(f"{passCount} PASSED {failCount} FAILED\n")
+            print(f"TEST COMPLETED: {passCount} PASSED, {failCount} FAILED\n")

@@ -97,7 +97,7 @@ def loadImages(path):
         # Open each image using PIL
         img = Image.open(os.path.join(path, i))
         img = img.convert('L')
-        img = img.rotate(random.randint(-20, 20), PIL.Image.NEAREST, expand=0)
+        #img = img.rotate(random.randint(-20, 20), PIL.Image.NEAREST, expand=0)
         # Convert image to NumPy array and append
         imgArr.append(np.array(img))
     print("Done!")
@@ -141,6 +141,7 @@ def main():
         print("\tS: Save network")
         print("\tL: Load network")
         print("\tR: Make input")
+        print("\tN: Reset network")
         print("\tQ: Quit")
         trainInput = input("Action: ")
 
@@ -182,7 +183,7 @@ def main():
                 # I don't usually store them. But in this case, they are useful to identify output
                 # if there are too many files to be displayed.
                 newInput, inputFileNames = loadImages(directoryInput)
-                np.random.shuffle(newInput)
+                #np.random.shuffle(newInput)
                 nn.makeInput(newInput.reshape(len(newInput), -1) / 255, inputFileNames)
                 nn.displayOutput(True)
                 try:
@@ -195,6 +196,23 @@ def main():
                 print("!-----------------------------------------------!\n")
                 print("Please ensure that the neural network loaded is designed for this data")
                 print("\n!-----------------------------------------------!")
+
+        elif trainInput == 'n' or trainInput == 'N':
+            proceedChoice = input("Resetting the network will require retraining to become usable again. Are you "
+                                  "sure you would like to proceed? (Y/N)\n")
+            if proceedChoice == 'y' or proceedChoice == 'Y':
+                nn.reset()
+
+        elif trainInput == 'g' or trainInput == 'G':
+            generateChoice = input("Would you like to generate a test report? (NOTE: Function was designed "
+                                   "with specific labelling in mind, and as such, may not work) Type G to generate\n")
+            if generateChoice == 'g' or generateChoice == 'G':
+                try:
+                    directoryInput = input("Please enter directory: ")
+                    newInput, inputFileNames = loadImages(directoryInput)
+                    nn.generateTestReport(newInput.reshape(len(newInput), -1) / 255, inputFileNames)
+                except:
+                    print("Sorry, this is a debug function, and as such, may not work the way you expect")
 
         elif trainInput == 'q' or trainInput == 'Q':
             running = False
